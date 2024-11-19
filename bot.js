@@ -1,5 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { TdLib } = require('tdl'); // Use TdLib directly (without 'new' keyword)
+const MTProto = require('telegram-mtproto');
 const readlineSync = require('readline-sync');
 const express = require('express');
 
@@ -15,11 +15,15 @@ const bot = new TelegramBot(botToken, { polling: true });
 const app = express();
 const port = 8080;
 
-// TDLib Client Configuration (Updated way to initialize TdLib)
-const tdlib = new TdLib({
-  apiId: apiId,
-  apiHash: apiHash,
-});
+// MTProto Client Configuration
+const settings = {
+  api_id: apiId,
+  api_hash: apiHash,
+  phone_number: null, // This will be set when we take the user's phone number
+};
+
+// Initialize MTProto client
+const client = MTProto(settings);
 
 // Handle incoming messages
 bot.on('message', async (msg) => {
@@ -67,27 +71,31 @@ async function waitForUserInputs(chatId, sessionType) {
   bot.sendMessage(chatId, `Your ${sessionType} string session:\n\n\`${stringSession}\`\n\nSave it securely!`);
 }
 
-// Generate String Session using TDLib
+// Generate String Session using MTProto
 async function generateStringSession(apiId, apiHash, phone, sessionType) {
   try {
-    // Initialize TDLib client with updated method
-    const client = await tdlib.createClient();
-
-    // Authenticate with phone number
-    await client.auth.sendCode(phone);
+    settings.phone_number = phone;
+    const phone_code_hash = await client('auth.sendCode', {
+      phone_number: phone,
+      settings: { api_id: apiId, api_hash: apiHash },
+    });
 
     const otp = readlineSync.question('Enter the OTP sent to your phone: ');
-    await client.auth.signIn({ phone_number: phone, code: otp });
+
+    await client('auth.signIn', {
+      phone_number: phone,
+      phone_code_hash: phone_code_hash.phone_code_hash,
+      phone_code: otp,
+    });
 
     // Handle two-step password (if set)
     const password = readlineSync.question('Enter your two-step verification password (leave blank if not set): ');
     if (password) {
-      await client.auth.checkPassword(password);
+      await client('auth.checkPassword', { password });
     }
 
     // Get string session
-    const stringSession = await client.session.getStringSession();
-    client.close();
+    const stringSession = await client('auth.exportAuthorization', { id: apiId });
     return stringSession;
   } catch (error) {
     console.error('Error generating string session:', error);
