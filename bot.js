@@ -1,6 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
-const MTProto = require('telegram-mtproto');
 const readlineSync = require('readline-sync');
+const MTProto = require('telegram-mtproto');
 const express = require('express');
 
 // Hardcoded values for API ID, API Hash, and Bot Token
@@ -19,11 +19,16 @@ const port = 8080;
 const settings = {
   api_id: apiId,
   api_hash: apiHash,
-  phone_number: null, // This will be set when we take the user's phone number
+  phone_number: null,
 };
 
-// Initialize MTProto client
 const client = MTProto(settings);
+
+// Validate phone number format
+function validatePhoneNumber(phone) {
+  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+  return phoneRegex.test(phone);
+}
 
 // Handle incoming messages
 bot.on('message', async (msg) => {
@@ -67,6 +72,11 @@ async function waitForUserInputs(chatId, sessionType) {
   const apiHashInput = readlineSync.question('Enter your Telegram API Hash: ');
   const phoneInput = readlineSync.question('Enter your phone number (with country code): ');
 
+  if (!validatePhoneNumber(phoneInput)) {
+    console.log("Invalid phone number format. Please enter a valid phone number.");
+    return;
+  }
+
   const stringSession = await generateStringSession(apiIdInput, apiHashInput, phoneInput, sessionType);
   bot.sendMessage(chatId, `Your ${sessionType} string session:\n\n\`${stringSession}\`\n\nSave it securely!`);
 }
@@ -75,27 +85,27 @@ async function waitForUserInputs(chatId, sessionType) {
 async function generateStringSession(apiId, apiHash, phone, sessionType) {
   try {
     settings.phone_number = phone;
+
+    // Send verification code to phone
     const phone_code_hash = await client('auth.sendCode', {
       phone_number: phone,
       settings: { api_id: apiId, api_hash: apiHash },
     });
 
+    // Get OTP from user
     const otp = readlineSync.question('Enter the OTP sent to your phone: ');
 
+    // Sign in the user
     await client('auth.signIn', {
       phone_number: phone,
       phone_code_hash: phone_code_hash.phone_code_hash,
       phone_code: otp,
     });
 
-    // Handle two-step password (if set)
-    const password = readlineSync.question('Enter your two-step verification password (leave blank if not set): ');
-    if (password) {
-      await client('auth.checkPassword', { password });
-    }
+    console.log("Successfully authenticated!");
 
     // Get string session
-    const stringSession = await client('auth.exportAuthorization', { id: apiId });
+    const stringSession = await client.session.getStringSession();
     return stringSession;
   } catch (error) {
     console.error('Error generating string session:', error);
