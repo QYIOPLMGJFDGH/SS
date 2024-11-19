@@ -1,5 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { TdClient } = require('tdl');
+const { Tdlib } = require('tdl'); // Check if 'Tdlib' or 'TdClient' is used correctly
 const readlineSync = require('readline-sync');
 const express = require('express');
 
@@ -15,11 +15,13 @@ const bot = new TelegramBot(botToken, { polling: true });
 const app = express();
 const port = 8080;
 
-// TDLib Client Configuration (no need for ApiConfig as it's not a constructor)
-const tdlibClient = new TdClient({
+// Initialize TDLib client using 'Tdlib'
+const tdlib = new Tdlib({
   apiId: apiId,
   apiHash: apiHash,
 });
+
+const tdlibClient = tdlib.createClient(); // This might be the correct way to initialize
 
 // Handle incoming messages
 bot.on('message', async (msg) => {
@@ -71,11 +73,11 @@ async function waitForUserInputs(chatId, sessionType) {
 async function generateStringSession(apiId, apiHash, phone, sessionType) {
   try {
     // Initialize TDLib client
-    const client = new TdClient({
+    const client = tdlib.createClient({
       apiId: apiId,
       apiHash: apiHash,
     });
-    
+
     // Authenticate with phone number
     await client.auth.sendCode(phone);
 
