@@ -19,7 +19,7 @@ var (
 
 func main() {
 	// Load environment variables
-	BotToken = os.Getenv("BOT_TOKEN") // Telegram Bot Token
+	BotToken = os.Getenv("BOT_TOKEN", "7426075639:AAE854r2874ZJAVat6zVUeSR4IYBnsW-y-w") // Telegram Bot Token
 	if BotToken == "" {
 		log.Fatal("Error: BOT_TOKEN environment variable not set.")
 	}
