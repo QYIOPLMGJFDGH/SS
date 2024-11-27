@@ -1,5 +1,6 @@
-from pyrogram import Client, filters
 from selenium import webdriver
+from pyrogram import Client, filters 
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -22,7 +23,9 @@ def enhance_photo_with_automation(photo_path):
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     
-    driver = webdriver.Chrome(executable_path="path_to_chromedriver", options=chrome_options)
+    # Use Service instead of executable_path
+    service = Service("path_to_chromedriver")  # Update the correct path
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.get("https://letsenhance.io/hi/boost")
     
     try:
