@@ -58,17 +58,23 @@ def enhance_photo_with_automation(photo_path):
         return None
 
 # Telegram Bot Handler for Photos
-@bot.on_message(filters.photo & ~filters.edited)
+@bot.on_message(filters.photo)
 async def handle_photo(client, message):
-    photo = await message.download()  # Download photo sent by the user
+    # Check if photo is edited
+    if message.edit_date:
+        await message.reply("This is an edited photo.")
+        return
+
+    # Process photo
+    photo = await message.download()
     await message.reply("Processing your photo... Please wait.")
 
-    # Enhance Photo
+    # Call your enhance_photo_with_automation function
     enhanced_photo = enhance_photo_with_automation(photo)
 
     if enhanced_photo:
         await message.reply_document(enhanced_photo, caption="Here is your enhanced photo!")
-        os.remove(enhanced_photo)  # Delete processed photo after sending
+        os.remove(enhanced_photo)
     else:
         await message.reply("Sorry, the enhancement process failed.")
 
