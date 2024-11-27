@@ -7,9 +7,9 @@ import time
 import os
 
 # Telegram Bot Configuration
-API_ID = "your_api_id"
-API_HASH = "your_api_hash"
-BOT_TOKEN = "your_bot_token"
+API_ID = "16457832"
+API_HASH = "3030874d0befdb5d05597deacc3e83ab"
+BOT_TOKEN = "7638229482:AAFsTQotjOM_4zC0W2k_P4PXLun8QtPKBDw"
 
 bot = Client("photoEnhanceBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
